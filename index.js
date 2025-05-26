@@ -9,10 +9,10 @@ const bcrypt = require("bcryptjs");
 const JWT_SECRET = "tu_clave_secreta"; // Usa una clave segura en producción
 
 const pool = mysql.createPool({
-  host: "localhost",
-  user: "root",
-  password: "",
-  database: "motocross",
+  host: "bx0oz38dea8m0th8insy-mysql.services.clever-cloud.com",
+  user: "unp10qja5xt1e9xw",
+  password: "xqiMCPSMTvJh6R56DdCI",
+  database: "bx0oz38dea8m0th8insy",
   port: 3306,
   waitForConnections: true,
   connectionLimit: 10,
