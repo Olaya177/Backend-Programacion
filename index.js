@@ -149,10 +149,10 @@ app.post("/auth/register", async (req, res) => {
     return res.status(400).json({ error: "Faltan datos requeridos." });
   }
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
+    // Guardar la contraseña tal cual (sin encriptar)
     await pool.query(
       "INSERT INTO usuarios (nombre, email, password, rol) VALUES (?, ?, ?, ?)",
-      [nombre, email, hashedPassword, "gestor"]
+      [nombre, email, password, "visitante"]
     );
     res.json({ message: "Usuario registrado correctamente." });
   } catch (err) {
@@ -171,8 +171,8 @@ app.post("/auth/login", async (req, res) => {
     if (rows.length === 0) return res.status(401).json({ error: "Credenciales inválidas." });
 
     const usuario = rows[0];
-    const valid = await bcrypt.compare(password, usuario.password);
-    if (!valid) return res.status(401).json({ error: "Credenciales inválidas." });
+    // Comparar la contraseña directamente (sin bcrypt)
+    if (password !== usuario.password) return res.status(401).json({ error: "Credenciales inválidas." });
 
     // Generar token JWT
     const token = jwt.sign(
