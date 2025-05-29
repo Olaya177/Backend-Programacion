@@ -21,6 +21,16 @@ CREATE TABLE usuarios (
     rol ENUM('admin', 'gestor', 'visitante') DEFAULT 'visitante'
 );
 
+CREATE TABLE inscripciones (
+    id_inscripcion INT PRIMARY KEY AUTO_INCREMENT,
+    id_usuario INT NOT NULL,
+    id_evento INT NOT NULL,
+    fecha_inscripcion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_usuario_evento (id_usuario, id_evento),
+    FOREIGN KEY (id_usuario) REFERENCES usuarios(id_usuario) ON DELETE CASCADE,
+    FOREIGN KEY (id_evento) REFERENCES eventos(id_evento) ON DELETE CASCADE
+);
+
 -- Insertar 5 usuarios con nombres
 INSERT INTO usuarios (nombre, email, password, rol) VALUES
 ('Carlos Ramírez', 'admin@correo.com', 'admin123', 'admin'),

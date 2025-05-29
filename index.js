@@ -5,8 +5,7 @@ app.use(express.json());
 const cors = require("cors");
 app.use(cors());
 const jwt = require("jsonwebtoken");
-const bcrypt = require("bcryptjs");
-const JWT_SECRET = "tu_clave_secreta"; // Usa una clave segura en producción
+const JWT_SECRET = "tu_clave_secreta";
 
 const pool = mysql.createPool({
   host: "bx0oz38dea8m0th8insy-mysql.services.clever-cloud.com",
@@ -214,6 +213,53 @@ function soloGestor(req, res, next) {
   }
   next();
 }
+
+// Middleware para verificar rol visitante
+function soloVisitante(req, res, next) {
+  if (req.usuario.rol !== "visitante") {
+    return res.status(403).json({ error: "Acceso solo para visitantes." });
+  }
+  next();
+}
+
+// Endpoint para inscribirse a un evento
+app.post("/eventos/:id_evento/inscribirse", autenticarToken, soloVisitante, async (req, res) => {
+  const { id_evento } = req.params;
+  const id_usuario = req.usuario.id_usuario;
+  try {
+    // Verificar si ya está inscrito
+    const [rows] = await pool.query(
+      "SELECT * FROM inscripciones WHERE id_usuario = ? AND id_evento = ?",
+      [id_usuario, id_evento]
+    );
+    if (rows.length > 0) {
+      return res.status(400).json({ error: "Ya estás inscrito en este evento." });
+    }
+    // Registrar inscripción
+    await pool.query(
+      "INSERT INTO inscripciones (id_usuario, id_evento) VALUES (?, ?)",
+      [id_usuario, id_evento]
+    );
+    res.json({ message: "Inscripción exitosa." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Endpoint para ver eventos inscritos por el usuario
+app.get("/mis-inscripciones", autenticarToken, soloVisitante, async (req, res) => {
+  const id_usuario = req.usuario.id_usuario;
+  try {
+    const [rows] = await pool.query(
+      `SELECT e.* FROM eventos e
+       JOIN inscripciones i ON e.id_evento = i.id_evento
+       WHERE i.id_usuario = ?`, [id_usuario]
+    );
+    res.json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Rutas protegidas para gestión de usuarios (solo admin)
 app.get("/usuarios", autenticarToken, soloAdmin, async (req, res) => {
