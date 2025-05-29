@@ -235,6 +235,26 @@ app.post("/eventos/:id_evento/inscribirse", autenticarToken, soloVisitante, asyn
     if (rows.length > 0) {
       return res.status(400).json({ error: "Ya estás inscrito en este evento." });
     }
+
+    // Verificar capacidad máxima y estado del evento
+    const [[evento]] = await pool.query(
+      "SELECT capacidad_maxima, estado FROM eventos WHERE id_evento = ?",
+      [id_evento]
+    );
+    if (!evento) {
+      return res.status(404).json({ error: "Evento no encontrado." });
+    }
+    if (evento.estado !== "activo") {
+      return res.status(400).json({ error: "Solo puedes inscribirte a eventos activos." });
+    }
+    const [[{ inscritos }]] = await pool.query(
+      "SELECT COUNT(*) AS inscritos FROM inscripciones WHERE id_evento = ?",
+      [id_evento]
+    );
+    if (inscritos >= evento.capacidad_maxima) {
+      return res.status(400).json({ error: "El evento ya alcanzó su capacidad máxima." });
+    }
+
     // Registrar inscripción
     await pool.query(
       "INSERT INTO inscripciones (id_usuario, id_evento) VALUES (?, ?)",
